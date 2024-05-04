@@ -2,6 +2,7 @@ package elastic.model;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Objects;
 
 public class Person {
     private String id;
@@ -44,6 +45,29 @@ public class Person {
             throw new IllegalArgumentException("Credit limit cannot be negative!");
         }
         return creditLimit;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        return equalsProperties((Person) other);
+    }
+
+    private boolean equalsProperties(Person person) {
+        return Objects.equals(id, person.id)
+                && Objects.equals(name, person.name)
+                && Objects.equals(birthDate, person.birthDate)
+                && Objects.equals(creditLimit, person.creditLimit);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, birthDate);
     }
 
     @Override
