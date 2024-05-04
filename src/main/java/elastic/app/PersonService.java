@@ -5,7 +5,6 @@ import elastic.model.PersonNotFoundException;
 import elastic.model.PersonRepository;
 
 import java.util.Collection;
-import java.util.List;
 
 public class PersonService {
     private final PersonRepository repository;
@@ -14,9 +13,15 @@ public class PersonService {
         this.repository = repository;
     }
 
-    public String insert(Person person) {
+    public void insert(Person person) {
         repository.save(person);
-        return person.id();
+    }
+
+    public void update(Person person) {
+        if (person.id() == null) {
+            throw new IllegalArgumentException("Person ID is required for update!");
+        }
+        repository.save(person);
     }
 
     public Person get(String id) {

@@ -18,12 +18,25 @@ public class Launcher {
     public static void main(String[] args) {
         var person = new Person("Daniel", dateOf(1980, 12, 20), BigDecimal.valueOf(1000));
         personService.insert(person);
-        System.out.printf("Inserted: " + person);
+        showPerson(person, "INSERTED");
+        person.updateCreditLimit(BigDecimal.valueOf(1000));
+        personService.update(person);
+        person = personService.get(person.id());
+        showPerson(person, "UPDATED");
     }
 
     private static Date dateOf(int year, int month, int day) {
         return Date.from(LocalDate.of(year, month, day)
                 .atStartOfDay()
                 .toInstant(ZoneOffset.UTC));
+    }
+
+    private static void showPerson(Person person, String caption) {
+        System.out.println("--- " + caption + " ---");
+        System.out.println("id.........: " + person.id());
+        System.out.println("name.......: " + person.name());
+        System.out.println("birthDate..: " + person.birthDate());
+        System.out.println("limitCredit: " + person.creditLimit());
+        System.out.println();
     }
 }

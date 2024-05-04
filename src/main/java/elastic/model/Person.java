@@ -7,12 +7,12 @@ public class Person {
     private String id;
     private final String name;
     private final Date birthDate;
-    private final BigDecimal creditLimit;
+    private BigDecimal creditLimit;
 
     public Person(String name, Date birthDate, BigDecimal creditLimit) {
         this.name = name;
         this.birthDate = birthDate;
-        this.creditLimit = creditLimit;
+        this.creditLimit = validateCreditLimit(creditLimit);
     }
 
     public void initialize(String id) {
@@ -32,6 +32,17 @@ public class Person {
     }
 
     public BigDecimal creditLimit() {
+        return creditLimit;
+    }
+
+    public void updateCreditLimit(BigDecimal creditLimit) {
+        this.creditLimit = validateCreditLimit(creditLimit);
+    }
+
+    private BigDecimal validateCreditLimit(BigDecimal creditLimit) {
+        if (creditLimit != null && creditLimit.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Credit limit cannot be negative!");
+        }
         return creditLimit;
     }
 
