@@ -3,6 +3,7 @@ package elastic.infra;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -57,8 +58,21 @@ public class JsonRepository implements Repository<String> {
     }
 
     @Override
-    public Collection<String> getAll() {
-        return null;
+    public Map<String, String> getAll() {
+        var result = new HashMap<String, String>();
+        var request = SearchRequest.of(a -> a.index(indexName));
+        try {
+            var search = esClient.search(request, ObjectNode.class);
+            search.hits().hits().forEach(h -> {
+                if (h.source() != null) {
+                    result.put(h.id(), h.source().toString());
+                }
+            });
+        } catch (IOException e) {
+            LOGGER.severe("Get all error: " + e.getMessage());
+            throw new UncheckedIOException(e);
+        }
+        return result;
     }
 
     @Override

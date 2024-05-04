@@ -16,6 +16,13 @@ public class Person {
         this.creditLimit = validateCreditLimit(creditLimit);
     }
 
+    public Person(String id, String name, Date birthDate, BigDecimal creditLimit) {
+        this.id = id;
+        this.name = name;
+        this.birthDate = birthDate;
+        this.creditLimit = validateCreditLimit(creditLimit);
+    }
+
     public void initialize(String id) {
         this.id = id;
     }
