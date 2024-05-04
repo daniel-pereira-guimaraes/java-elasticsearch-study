@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Date;
 
-public class Launcher {
+public class App {
 
     private static final Gson GSON = new Gson();
     private static final Repository<String> REPOSITORY = new JsonRepository("persons");
