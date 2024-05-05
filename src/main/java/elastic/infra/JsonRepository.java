@@ -1,11 +1,13 @@
 package elastic.infra;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,6 +22,7 @@ import org.elasticsearch.client.RestClient;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -90,6 +93,28 @@ public class JsonRepository implements Repository<String> {
                     ),
                     ObjectNode.class
             );
+            return mapResponse(response);
+        } catch (IOException e) {
+            LOGGER.severe("Query by name error: " + e.getMessage());
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public Map<String, String> queryByCreditLimit(BigDecimal minValue, BigDecimal maxValue) {
+        try {
+            var rangeQuery = RangeQuery.of(rq -> rq
+                    .field("creditLimit")
+                    .gte(JsonData.of(minValue))
+                    .lte(JsonData.of(maxValue))
+            )._toQuery();
+
+            var response = esClient.search(s -> s
+                    .index(indexName)
+                    .query(rangeQuery),
+                    ObjectNode.class
+            );
+
             return mapResponse(response);
         } catch (IOException e) {
             LOGGER.severe("Query by name error: " + e.getMessage());

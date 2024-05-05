@@ -23,6 +23,7 @@ public class App {
         REPOSITORY.createIndex();
 
         insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000)));
+        insertPerson(new Person("Hilary", dateOf(1985, 8, 5), BigDecimal.valueOf(1500)));
         insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
         insertPerson(new Person("Joseph Johnson", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
 
@@ -30,6 +31,7 @@ public class App {
         getById(id);
         getAll();
         queryByName();
+        queryByCreditLimit();
 
         REPOSITORY.deleteIndex();
     }
@@ -61,6 +63,13 @@ public class App {
     private static void queryByName() {
         var persons = personsFromJsons(REPOSITORY.queryByName("jonsom"));
         showPersons(persons, "QUERY BY NAME: jonsom");
+    }
+
+    private static void queryByCreditLimit() {
+        var min = BigDecimal.valueOf(1500);
+        var max = BigDecimal.valueOf(2000);
+        var persons = personsFromJsons(REPOSITORY.queryByCreditLimit(min, max));
+        showPersons(persons, "QUERY BY CREDIT LIMIT: " + min + ".." + max);
     }
 
     private static ArrayList<Person> personsFromJsons(Map<String, String> jsons) {
