@@ -101,7 +101,7 @@ public class JsonRepository implements Repository<String> {
     public void createIndex() {
         try {
             esClient.indices().create(c -> c
-                    .index("products")
+                    .index(indexName)
             );
         } catch (IOException e) {
             throw new UncheckedIOException(e);
