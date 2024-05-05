@@ -85,6 +85,7 @@ public class JsonRepository implements Repository<String> {
                             .match(m -> m
                                     .field("name")
                                     .query(name)
+                                    .fuzziness("2")
                             )
                     ),
                     ObjectNode.class

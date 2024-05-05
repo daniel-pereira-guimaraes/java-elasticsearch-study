@@ -57,8 +57,8 @@ public class App {
     }
 
     private static void queryByName() {
-        var persons = personsFromJsons(REPOSITORY.queryByName("johnson"));
-        showPersons(persons, "QUERY BY NAME: johnson");
+        var persons = personsFromJsons(REPOSITORY.queryByName("jonsom"));
+        showPersons(persons, "QUERY BY NAME: jonsom");
     }
 
     private static ArrayList<Person> personsFromJsons(Map<String, String> jsons) {
