@@ -1,6 +1,7 @@
 package elastic;
 
 import com.google.gson.Gson;
+import elastic.infra.HttpClientRepository;
 import elastic.infra.JsonRepository;
 import elastic.model.Person;
 import elastic.model.PersonNotFoundException;
@@ -17,11 +18,13 @@ import java.util.Map;
 public class App {
 
     private static final Gson GSON = new Gson();
-    private static final Repository<String> REPOSITORY = new JsonRepository("persons");
+    //private static final Repository<String> REPOSITORY = new JsonRepository("persons");
+    private static final Repository<String> REPOSITORY = new HttpClientRepository("persons");
 
     public static void main(String[] args) {
         REPOSITORY.createIndex();
 
+        /*
         insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000)));
         insertPerson(new Person("Hilary", dateOf(1985, 8, 5), BigDecimal.valueOf(1500)));
         insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
@@ -33,6 +36,8 @@ public class App {
         queryByName();
         queryByCreditLimit();
 
+
+     */
         REPOSITORY.deleteIndex();
     }
 

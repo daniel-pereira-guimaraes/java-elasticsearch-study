@@ -11,9 +11,9 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
 
 public class ElasticFactory {
-    private static final String SERVER_URL = "http://localhost:9200";
-    private static final String USERNAME = System.getenv("ES_USERNAME");
-    private static final String PASSWORD = System.getenv("ES_PASSWORD");
+    public static final String SERVER_URL = "http://localhost:9200";
+    public static final String USERNAME = System.getenv("ES_USERNAME");
+    public static final String PASSWORD = System.getenv("ES_PASSWORD");
 
     private ElasticFactory() {
 
