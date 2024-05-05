@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -59,25 +60,18 @@ public class JsonRepository implements Repository<String> {
 
     @Override
     public Map<String, String> getAll() {
-        var result = new HashMap<String, String>();
         var request = SearchRequest.of(a -> a.index(indexName));
         try {
-            var search = esClient.search(request, ObjectNode.class);
-            search.hits().hits().forEach(h -> {
-                if (h.source() != null) {
-                    result.put(h.id(), h.source().toString());
-                }
-            });
+            var response = esClient.search(request, ObjectNode.class);
+            return mapResponse(response);
         } catch (IOException e) {
             LOGGER.severe("Get all error: " + e.getMessage());
             throw new UncheckedIOException(e);
         }
-        return result;
     }
 
     @Override
     public Map<String, String> queryByName(String name) {
-        var result = new HashMap<String, String>();
         try {
             var response = esClient.search(s -> s
                     .index(indexName)
@@ -90,14 +84,11 @@ public class JsonRepository implements Repository<String> {
                     ),
                     ObjectNode.class
             );
-            response.hits().hits().stream()
-                    .filter(h -> h.source() != null)
-                    .forEach(h -> result.put(h.id(), h.source().toString()));
+            return mapResponse(response);
         } catch (IOException e) {
             LOGGER.severe("Query by name error: " + e.getMessage());
             throw new UncheckedIOException(e);
         }
-        return result;
     }
 
     @Override
@@ -126,6 +117,14 @@ public class JsonRepository implements Repository<String> {
             indexRequestBuilder.id(id);
         }
         return indexRequestBuilder.build();
+    }
+
+    private static Map<String, String> mapResponse(SearchResponse<ObjectNode> response) {
+        var map = new HashMap<String, String>();
+        response.hits().hits().stream()
+                .filter(h -> h.source() != null)
+                .forEach(h -> map.put(h.id(), h.source().toString()));
+        return map;
     }
 
 }
