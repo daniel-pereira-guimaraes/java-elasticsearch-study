@@ -12,6 +12,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 
 public class App {
 
@@ -23,30 +24,51 @@ public class App {
         insertPerson(new Person("Anna", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
         insertPerson(new Person("Joseph", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
 
+        var id = insertAndUpdate();
+        getById(id);
+        getAll();
+        queryByName();
+
+        REPOSITORY.deleteIndex();
+    }
+
+    private static String insertAndUpdate() {
         var person = new Person("Emma", dateOf(1980, 12, 20), BigDecimal.valueOf(0));
         var id = REPOSITORY.save(null, GSON.toJson(person));
         person.initialize(id);
         person.updateCreditLimit(BigDecimal.valueOf(1500));
         REPOSITORY.save(person.id(), GSON.toJson(person));
         showPerson(person, "INSERTED");
+        return id;
+    }
 
-        var json = REPOSITORY.get(person.id().toString());
+    private static void getById(String id) {
+        var json = REPOSITORY.get(id);
         if (json.isEmpty()) {
             throw new PersonNotFoundException(id);
         }
-        person = GSON.fromJson(json.get(), Person.class);
+        var person = GSON.fromJson(json.get(), Person.class);
         showPerson(person, "UPDATED");
+    }
 
-        var jsons = REPOSITORY.getAll();
+    private static void getAll() {
+        var persons = personsFromJsons(REPOSITORY.getAll());
+        showPersons(persons, "ALL PERSONS");
+    }
+
+    private static void queryByName() {
+        var persons = personsFromJsons(REPOSITORY.queryByName("Anna"));
+        showPersons(persons, "QUERY BY NAME: Anna");
+    }
+
+    private static ArrayList<Person> personsFromJsons(Map<String, String> jsons) {
         var persons = new ArrayList<Person>();
         jsons.forEach((k, v) -> {
             var p = GSON.fromJson(v, Person.class);
             p.initialize(k);
             persons.add(p);
         });
-        showPersons(persons, "ALL PERSONS");
-
-        REPOSITORY.deleteIndex();
+        return persons;
     }
 
     private static void insertPerson(Person person) {

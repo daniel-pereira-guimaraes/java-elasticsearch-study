@@ -76,6 +76,30 @@ public class JsonRepository implements Repository<String> {
     }
 
     @Override
+    public Map<String, String> queryByName(String name) {
+        var result = new HashMap<String, String>();
+        try {
+            var response = esClient.search(s -> s
+                    .index(indexName)
+                    .query(q -> q
+                            .match(m -> m
+                                    .field("name")
+                                    .query(name)
+                            )
+                    ),
+                    ObjectNode.class
+            );
+            response.hits().hits().stream()
+                    .filter(h -> h.source() != null)
+                    .forEach(h -> result.put(h.id(), h.source().toString()));
+        } catch (IOException e) {
+            LOGGER.severe("Query by name error: " + e.getMessage());
+            throw new UncheckedIOException(e);
+        }
+        return result;
+    }
+
+    @Override
     public void deleteIndex() {
         var request = new DeleteIndexRequest.Builder().index(indexName).build();
         try {
