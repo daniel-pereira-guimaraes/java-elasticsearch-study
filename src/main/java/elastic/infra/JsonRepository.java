@@ -98,6 +98,17 @@ public class JsonRepository implements Repository<String> {
     }
 
     @Override
+    public void createIndex() {
+        try {
+            esClient.indices().create(c -> c
+                    .index("products")
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
     public void deleteIndex() {
         var request = new DeleteIndexRequest.Builder().index(indexName).build();
         try {

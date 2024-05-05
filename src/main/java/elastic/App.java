@@ -20,6 +20,8 @@ public class App {
     private static final Repository<String> REPOSITORY = new JsonRepository("persons");
 
     public static void main(String[] args) {
+        REPOSITORY.createIndex();
+
         insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000)));
         insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
         insertPerson(new Person("Joseph Johnson", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
@@ -93,10 +95,10 @@ public class App {
 
     private static void showPersons(Collection<Person> persons, String caption) {
         System.out.println("--- " + caption + " ---");
-        persons.forEach(person -> {
+        persons.forEach(person ->
             System.out.println(person.id() + " | " + person.name() + " | " +
-                    person.birthDate() + " | " + person.creditLimit());
-        });
+                    person.birthDate() + " | " + person.creditLimit())
+        );
         System.out.println();
     }
 }

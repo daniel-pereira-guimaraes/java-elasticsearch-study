@@ -8,5 +8,6 @@ public interface Repository<T> {
     Optional<T> get(String id);
     Map<String, T> getAll();
     Map<String, T> queryByName(String name);
+    void createIndex();
     void deleteIndex();
 }
