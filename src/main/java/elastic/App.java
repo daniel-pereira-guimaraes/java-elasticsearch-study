@@ -21,8 +21,8 @@ public class App {
 
     public static void main(String[] args) {
         insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000)));
-        insertPerson(new Person("Anna", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
-        insertPerson(new Person("Joseph", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
+        insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
+        insertPerson(new Person("Joseph Johnson", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
 
         var id = insertAndUpdate();
         getById(id);
@@ -57,8 +57,8 @@ public class App {
     }
 
     private static void queryByName() {
-        var persons = personsFromJsons(REPOSITORY.queryByName("Anna"));
-        showPersons(persons, "QUERY BY NAME: Anna");
+        var persons = personsFromJsons(REPOSITORY.queryByName("johnson"));
+        showPersons(persons, "QUERY BY NAME: johnson");
     }
 
     private static ArrayList<Person> personsFromJsons(Map<String, String> jsons) {
