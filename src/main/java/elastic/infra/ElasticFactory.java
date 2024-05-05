@@ -20,6 +20,7 @@ public class ElasticFactory {
     }
 
     public static ElasticsearchClient buildElasticClient() {
+        System.out.println("Connecting to " + SERVER_URL);
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(USERNAME, PASSWORD));
         var restClient = RestClient.builder(HttpHost.create(SERVER_URL))

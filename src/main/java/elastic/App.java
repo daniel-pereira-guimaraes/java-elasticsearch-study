@@ -10,44 +10,62 @@ import elastic.model.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 public class App {
 
+    private static final String INDEX_NAME = "persons";
     private static final Gson GSON = new Gson();
-    //private static final Repository<String> REPOSITORY = new JsonRepository("persons");
-    private static final Repository<String> REPOSITORY = new HttpClientRepository("persons");
+    private static final Repository<String> REPOSITORY = chooseRepository();
 
     public static void main(String[] args) {
         REPOSITORY.createIndex();
+        try {
+            insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000)));
+            insertPerson(new Person("Hilary", dateOf(1985, 8, 5), BigDecimal.valueOf(1500)));
+            insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
+            insertPerson(new Person("Joseph Johnson", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
 
-        /*
-        insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000)));
-        insertPerson(new Person("Hilary", dateOf(1985, 8, 5), BigDecimal.valueOf(1500)));
-        insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
-        insertPerson(new Person("Joseph Johnson", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
+            var id = insertAndUpdate();
+            getById(id);
 
-        var id = insertAndUpdate();
-        getById(id);
-        getAll();
-        queryByName();
-        queryByCreditLimit();
+            waitForIndexing();
 
+            getAll();
+            queryByName();
+            queryByCreditLimit();
 
-     */
-        REPOSITORY.deleteIndex();
+        } finally {
+            REPOSITORY.deleteIndex();
+        }
+        System.exit(0);
+    }
+
+    private static Repository<String> chooseRepository() {
+        System.out.println("--- CHOOSE REPOSITORY ---");
+        System.out.println();
+        System.out.println("1 - JsonRepository");
+        System.out.println("2 - HttpClientRepository");
+        var scanner = new Scanner(System.in);
+        while (true) {
+            System.out.print("\nWhat is your choice? ");
+            var choice = scanner.nextByte();
+            switch (choice) {
+                case 1: return new JsonRepository(INDEX_NAME);
+                case 2: return new HttpClientRepository(INDEX_NAME);
+                default: System.out.println("Invalid choice!");
+            }
+        }
     }
 
     private static String insertAndUpdate() {
         var person = new Person("Emma", dateOf(1980, 12, 20), BigDecimal.valueOf(0));
         var id = REPOSITORY.save(null, GSON.toJson(person));
         person.initialize(id);
+        showPerson(person, "INSERTED");
         person.updateCreditLimit(BigDecimal.valueOf(1500));
         REPOSITORY.save(person.id(), GSON.toJson(person));
-        showPerson(person, "INSERTED");
+        showPerson(person, "UPDATED");
         return id;
     }
 
@@ -57,29 +75,30 @@ public class App {
             throw new PersonNotFoundException(id);
         }
         var person = GSON.fromJson(json.get(), Person.class);
-        showPerson(person, "UPDATED");
+        showPerson(person, "GET: " + id);
     }
 
     private static void getAll() {
-        var persons = personsFromJsons(REPOSITORY.getAll());
+        var persons = personsFromJsonMap(REPOSITORY.getAll());
         showPersons(persons, "ALL PERSONS");
     }
 
     private static void queryByName() {
-        var persons = personsFromJsons(REPOSITORY.queryByName("jonsom"));
-        showPersons(persons, "QUERY BY NAME: jonsom");
+        var name = "johnson";
+        var persons = personsFromJsonMap(REPOSITORY.queryByName(name));
+        showPersons(persons, "QUERY BY NAME: " + name);
     }
 
     private static void queryByCreditLimit() {
         var min = BigDecimal.valueOf(1500);
         var max = BigDecimal.valueOf(2000);
-        var persons = personsFromJsons(REPOSITORY.queryByCreditLimit(min, max));
+        var persons = personsFromJsonMap(REPOSITORY.queryByCreditLimit(min, max));
         showPersons(persons, "QUERY BY CREDIT LIMIT: " + min + ".." + max);
     }
 
-    private static ArrayList<Person> personsFromJsons(Map<String, String> jsons) {
+    private static ArrayList<Person> personsFromJsonMap(Map<String, String> jsonMap) {
         var persons = new ArrayList<Person>();
-        jsons.forEach((k, v) -> {
+        jsonMap.forEach((k, v) -> {
             var p = GSON.fromJson(v, Person.class);
             p.initialize(k);
             persons.add(p);
@@ -114,5 +133,13 @@ public class App {
                     person.birthDate() + " | " + person.creditLimit())
         );
         System.out.println();
+    }
+
+    private static void waitForIndexing() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
