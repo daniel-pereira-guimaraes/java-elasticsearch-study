@@ -22,13 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class HttpClientRepository implements Repository<String> {
+public class HttpClientJsonRepository implements Repository<String> {
 
     private static final Gson gson = new Gson();
 
     private final String indexName;
 
-    public HttpClientRepository(String indexName) {
+    public HttpClientJsonRepository(String indexName) {
         this.indexName = indexName;
     }
 

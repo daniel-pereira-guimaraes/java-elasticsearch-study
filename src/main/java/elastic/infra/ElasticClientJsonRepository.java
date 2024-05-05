@@ -18,14 +18,14 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class JsonRepository implements Repository<String> {
+public class ElasticClientJsonRepository implements Repository<String> {
 
-    private static final Logger LOGGER = Logger.getLogger(JsonRepository.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ElasticClientJsonRepository.class.getName());
 
     private final ElasticsearchClient esClient = ElasticFactory.buildElasticClient();
     private final String indexName;
 
-    public JsonRepository(String indexName) {
+    public ElasticClientJsonRepository(String indexName) {
         this.indexName = indexName;
     }
 

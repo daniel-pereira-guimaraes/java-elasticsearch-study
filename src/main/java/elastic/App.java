@@ -1,8 +1,8 @@
 package elastic;
 
 import com.google.gson.Gson;
-import elastic.infra.HttpClientRepository;
-import elastic.infra.JsonRepository;
+import elastic.infra.HttpClientJsonRepository;
+import elastic.infra.ElasticClientJsonRepository;
 import elastic.model.Person;
 import elastic.model.PersonNotFoundException;
 import elastic.model.Repository;
@@ -44,15 +44,15 @@ public class App {
     private static Repository<String> chooseRepository() {
         System.out.println("--- CHOOSE REPOSITORY ---");
         System.out.println();
-        System.out.println("1 - JsonRepository");
-        System.out.println("2 - HttpClientRepository");
+        System.out.println("1 - " + ElasticClientJsonRepository.class.getSimpleName());
+        System.out.println("2 - " + HttpClientJsonRepository.class.getSimpleName());
         var scanner = new Scanner(System.in);
         while (true) {
             System.out.print("\nWhat is your choice? ");
             var choice = scanner.nextByte();
             switch (choice) {
-                case 1: return new JsonRepository(INDEX_NAME);
-                case 2: return new HttpClientRepository(INDEX_NAME);
+                case 1: return new ElasticClientJsonRepository(INDEX_NAME);
+                case 2: return new HttpClientJsonRepository(INDEX_NAME);
                 default: System.out.println("Invalid choice!");
             }
         }
