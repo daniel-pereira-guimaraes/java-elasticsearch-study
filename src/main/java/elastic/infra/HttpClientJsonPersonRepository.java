@@ -3,7 +3,8 @@ package elastic.infra;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import elastic.model.Repository;
+import elastic.model.Person;
+import elastic.model.PersonRepository;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -17,54 +18,51 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
-public class HttpClientJsonRepository implements Repository<String> {
+public class HttpClientJsonPersonRepository implements PersonRepository {
 
-    private static final Gson gson = new Gson();
+    private static final Gson GSON = new Gson();
 
     private final String indexName;
 
-    public HttpClientJsonRepository(String indexName) {
+    public HttpClientJsonPersonRepository(String indexName) {
         this.indexName = indexName;
     }
 
     @Override
-    public String save(String id, String value) {
-        var request = configRequest(new HttpPost(uri(indexName, "_doc", id)));
+    public void save(Person person) {
+        var request = configRequest(new HttpPost(uri(indexName, "_doc", person.id())));
         try {
-            request.setEntity(new StringEntity(value));
+            request.setEntity(new StringEntity(GSON.toJson(person)));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
-        return documentId(executeRequest(request));
+        person.initialize(documentId(executeRequest(request)));
     }
 
     @Override
-    public Optional<String> get(String id) {
+    public Optional<Person> get(String id) {
         var request = configRequest(new HttpGet(uri(indexName, "_doc", id)));
         var result = executeRequest(request);
-        return Optional.of(source(result));
+        return Optional.of(GSON.fromJson(source(result), Person.class));
     }
 
     @Override
-    public Map<String, String> getAll() {
+    public List<Person> getAll() {
         var request = configRequest(new HttpGet(uri(indexName, "_search")));
         return sources(executeRequest(request));
     }
 
     @Override
-    public Map<String, String> queryByName(String name) {
+    public List<Person> queryByName(String name) {
         var queryParam = "_search?q=name:" + urlEncode(name);
         var request = configRequest(new HttpGet(uri(indexName, queryParam)));
         return sources(executeRequest(request));
     }
 
     @Override
-    public Map<String, String> queryByCreditLimit(BigDecimal minValue, BigDecimal maxValue) {
+    public List<Person> queryByCreditLimit(BigDecimal minValue, BigDecimal maxValue) {
         var queryParam = "_search?q=creditLimit:[" + minValue + "+TO+" + maxValue + "]";
         var request = configRequest(new HttpGet(uri(indexName, queryParam)));
         return sources(executeRequest(request));
@@ -128,7 +126,7 @@ public class HttpClientJsonRepository implements Repository<String> {
 
     private static Optional<String> errorReason(HttpResponse response) throws IOException {
         var json = contentAsString(response);
-        var jsonElement = gson.fromJson(json, JsonElement.class);
+        var jsonElement = GSON.fromJson(json, JsonElement.class);
         try {
             return Optional.of(jsonElement.getAsJsonObject()
                     .getAsJsonObject("error")
@@ -158,20 +156,19 @@ public class HttpClientJsonRepository implements Repository<String> {
         return source.toString();
     }
 
-    private static Map<String, String> sources(String json) {
-        var map = new HashMap<String, String>();
+    private static List<Person> sources(String json) {
+        var list = new ArrayList<Person>();
         var jsonElement = JsonParser.parseString(json);
-        var hits = jsonElement.getAsJsonObject()
-                .getAsJsonObject("hits")
-                .getAsJsonArray("hits");
+        var hits = jsonElement.getAsJsonObject().getAsJsonObject("hits").getAsJsonArray("hits");
         for (var hit : hits) {
             var hitObject = hit.getAsJsonObject();
             var id = hitObject.get("_id").getAsString();
             var source = hitObject.getAsJsonObject("_source").toString();
-            map.put(id, source);
+            var person = GSON.fromJson(source, Person.class);
+            person.initialize(id);
+            list.add(person);
         }
-
-        return map;
+        return list;
     }
 
     private static String urlEncode(String s) {

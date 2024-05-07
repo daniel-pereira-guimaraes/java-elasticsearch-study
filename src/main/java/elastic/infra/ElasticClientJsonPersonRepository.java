@@ -9,7 +9,9 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import elastic.model.Repository;
+import com.google.gson.Gson;
+import elastic.model.Person;
+import elastic.model.PersonRepository;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -18,23 +20,24 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class ElasticClientJsonRepository implements Repository<String> {
+public class ElasticClientJsonPersonRepository implements PersonRepository {
 
-    private static final Logger LOGGER = Logger.getLogger(ElasticClientJsonRepository.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ElasticClientJsonPersonRepository.class.getName());
+    private static final Gson GSON = new Gson();
 
     private final ElasticsearchClient esClient = ElasticFactory.buildElasticClient();
     private final String indexName;
 
-    public ElasticClientJsonRepository(String indexName) {
+    public ElasticClientJsonPersonRepository(String indexName) {
         this.indexName = indexName;
     }
 
     @Override
-    public String save(String id, String json) {
-        var indexRequest = buildIndexRequest(id, json);
+    public void save(Person person) {
+        var indexRequest = buildIndexRequest(person.id(), GSON.toJson(person));
         try {
             var response = esClient.index(indexRequest);
-            return response.id();
+            person.initialize(response.id());
         } catch (IOException e) {
             LOGGER.severe("Save error: " + e.getMessage());
             throw new UncheckedIOException(e);
@@ -42,14 +45,14 @@ public class ElasticClientJsonRepository implements Repository<String> {
     }
 
     @Override
-    public Optional<String> get(String id) {
+    public Optional<Person> get(String id) {
         var request = new GetRequest.Builder().index(indexName).id(id).build();
         try {
             var response = esClient.get(request, ObjectNode.class);
             if (response.source() == null) {
                 return Optional.empty();
             }
-            return Optional.of(response.source().toString());
+            return Optional.of(GSON.fromJson(response.source().toString(), Person.class));
         } catch (IOException e) {
             LOGGER.severe("Get error: " + e.getMessage());
             throw new UncheckedIOException("Error while getting document from Elasticsearch", e);
@@ -57,7 +60,7 @@ public class ElasticClientJsonRepository implements Repository<String> {
     }
 
     @Override
-    public Map<String, String> getAll() {
+    public List<Person> getAll() {
         var request = SearchRequest.of(a -> a.index(indexName));
         try {
             var response = esClient.search(request, ObjectNode.class);
@@ -69,7 +72,7 @@ public class ElasticClientJsonRepository implements Repository<String> {
     }
 
     @Override
-    public Map<String, String> queryByName(String name) {
+    public List<Person> queryByName(String name) {
         try {
             var response = esClient.search(s -> s
                     .index(indexName)
@@ -90,7 +93,7 @@ public class ElasticClientJsonRepository implements Repository<String> {
     }
 
     @Override
-    public Map<String, String> queryByCreditLimit(BigDecimal minValue, BigDecimal maxValue) {
+    public List<Person> queryByCreditLimit(BigDecimal minValue, BigDecimal maxValue) {
         try {
             var rangeQuery = RangeQuery.of(rq -> rq
                     .field("creditLimit")
@@ -144,12 +147,11 @@ public class ElasticClientJsonRepository implements Repository<String> {
         return indexRequestBuilder.build();
     }
 
-    private static Map<String, String> mapResponse(SearchResponse<ObjectNode> response) {
-        var map = new HashMap<String, String>();
-        response.hits().hits().stream()
+    private static List<Person> mapResponse(SearchResponse<ObjectNode> response) {
+        return response.hits().hits().stream()
                 .filter(h -> h.source() != null)
-                .forEach(h -> map.put(h.id(), h.source().toString()));
-        return map;
+                .map(h -> GSON.fromJson(h.source().toString(), Person.class))
+                .toList();
     }
 
 }
