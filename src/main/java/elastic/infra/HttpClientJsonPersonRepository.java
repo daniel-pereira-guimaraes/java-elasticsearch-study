@@ -1,8 +1,5 @@
 package elastic.infra;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import elastic.model.Person;
 import elastic.model.PersonRepository;
 import org.apache.http.HttpResponse;
@@ -22,8 +19,7 @@ import java.util.*;
 
 public class HttpClientJsonPersonRepository implements PersonRepository {
 
-    private static final Gson GSON = new Gson();
-
+    private final Serializer serializer = new Serializer();
     private final String indexName;
 
     public HttpClientJsonPersonRepository(String indexName) {
@@ -35,7 +31,7 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
         var request = configRequest(new HttpPost(uri(indexName, "_doc", person.id())));
         try {
             var personDocument = PersonDocument.of(person);
-            request.setEntity(new StringEntity(GSON.toJson(personDocument)));
+            request.setEntity(new StringEntity(serializer.toJson(personDocument)));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -46,8 +42,7 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
     public Optional<Person> get(String id) {
         var request = configRequest(new HttpGet(uri(indexName, "_doc", id)));
         var result = executeRequest(request);
-        var personDocument = GSON.fromJson(source(result), PersonDocument.class);
-        return Optional.of(personDocument.toPerson(id));
+        return Optional.of(source(result).toPerson(id));
     }
 
     @Override
@@ -86,7 +81,7 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
     }
 
 
-    private static String uri(String... path) {
+    private String uri(String... path) {
         var sb = new StringBuilder(ElasticFactory.SERVER_URL);
         Arrays.stream(path)
                 .filter(s -> s != null && !s.isEmpty())
@@ -94,7 +89,7 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
         return sb.toString();
     }
 
-    private static String executeRequest(HttpUriRequest request) {
+    private String executeRequest(HttpUriRequest request) {
         var credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(
                 ElasticFactory.USERNAME, ElasticFactory.PASSWORD));
@@ -114,7 +109,7 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
 
     }
 
-    private static void checkStatusCode(HttpResponse response) throws IOException {
+    private void checkStatusCode(HttpResponse response) throws IOException {
         var status = response.getStatusLine().getStatusCode();
         if (status < 200 || status > 299) {
             var message = "Request error! Status code: " + status;
@@ -126,54 +121,65 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
         }
     }
 
-    private static Optional<String> errorReason(HttpResponse response) throws IOException {
+    private Optional<String> errorReason(HttpResponse response) throws IOException {
         var json = contentAsString(response);
-        var jsonElement = GSON.fromJson(json, JsonElement.class);
-        try {
-            return Optional.of(jsonElement.getAsJsonObject()
-                    .getAsJsonObject("error")
-                    .getAsJsonArray("root_cause")
-                    .get(0)
-                    .getAsJsonObject()
-                    .get("reason")
-                    .getAsString());
-        } catch (RuntimeException e) {
+        var errorResponse = serializer.fromJson(json, ErrorResponse.class);
+        if (errorResponse.error == null) {
             return Optional.empty();
         }
+        return Optional.ofNullable(errorResponse.error.reason);
     }
 
-    private static String contentAsString(HttpResponse response) throws IOException {
+    private String contentAsString(HttpResponse response) throws IOException {
         return new String(response.getEntity().getContent().readAllBytes());
     }
 
-    private static String documentId(String json) {
-        var jsonElement = JsonParser.parseString(json);
-        var id = jsonElement.getAsJsonObject().getAsJsonPrimitive("_id");
-        return id.getAsString();
+    private String documentId(String json) {
+        return serializer.fromJson(json, IndexResponse.class)._id;
     }
 
-    private static String source(String json) {
-        var element = JsonParser.parseString(json);
-        var source = element.getAsJsonObject().getAsJsonObject("_source");
-        return source.toString();
+    private PersonDocument source(String json) {
+        return serializer.fromJson(json, PersonResponse.class)._source;
     }
 
-    private static List<Person> sources(String json) {
-        var list = new ArrayList<Person>();
-        var jsonElement = JsonParser.parseString(json);
-        var hits = jsonElement.getAsJsonObject().getAsJsonObject("hits").getAsJsonArray("hits");
-        for (var hit : hits) {
-            var hitObject = hit.getAsJsonObject();
-            var id = hitObject.get("_id").getAsString();
-            var source = hitObject.getAsJsonObject("_source").toString();
-            var personDocument = GSON.fromJson(source, PersonDocument.class);
-            list.add(personDocument.toPerson(id));
-        }
-        return list;
+    private List<Person> sources(String json) {
+        var searchResponse = serializer.fromJson(json, SearchResponse.class);
+        return searchResponse.hits.hits.stream()
+                .map(hit -> hit._source.toPerson(hit._id))
+                .toList();
     }
 
     private static String urlEncode(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
+    public static class IndexResponse {
+        public String _id;
+    }
+
+    public static class PersonResponse {
+        public PersonDocument _source;
+    }
+
+    public static class SearchResponse {
+        public Hits hits;
+
+        public static class Hits {
+            public List<Hit> hits;
+
+            public static class Hit {
+                public String _id;
+                public PersonDocument _source;
+            }
+        }
+    }
+
+    public static class ErrorResponse {
+        public ErrorDetail error;
+
+        public static class ErrorDetail {
+            public String reason;
+        }
     }
 
 }

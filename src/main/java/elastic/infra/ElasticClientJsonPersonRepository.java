@@ -9,7 +9,6 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.Gson;
 import elastic.model.Person;
 import elastic.model.PersonRepository;
 
@@ -23,8 +22,8 @@ import java.util.logging.Logger;
 public class ElasticClientJsonPersonRepository implements PersonRepository {
 
     private static final Logger LOGGER = Logger.getLogger(ElasticClientJsonPersonRepository.class.getName());
-    private static final Gson GSON = new Gson();
 
+    private final Serializer serializer = new Serializer();
     private final ElasticsearchClient esClient = ElasticFactory.buildElasticClient();
     private final String indexName;
 
@@ -139,7 +138,7 @@ public class ElasticClientJsonPersonRepository implements PersonRepository {
 
     private IndexRequest<String> buildIndexRequest(Person person) {
         var personDocument = PersonDocument.of(person);
-        var jsonReader = new StringReader(GSON.toJson(personDocument));
+        var jsonReader = new StringReader(serializer.toJson(personDocument));
         var indexRequestBuilder = new IndexRequest.Builder<String>()
                 .index(indexName).withJson(jsonReader);
         var id = person.id();
@@ -149,15 +148,15 @@ public class ElasticClientJsonPersonRepository implements PersonRepository {
         return indexRequestBuilder.build();
     }
 
-    private static List<Person> personsFromResponse(SearchResponse<ObjectNode> response) {
+    private List<Person> personsFromResponse(SearchResponse<ObjectNode> response) {
         return response.hits().hits().stream()
                 .filter(hit -> hit.source() != null)
                 .map(hit -> personFromNode(hit.id(), hit.source()))
                 .toList();
     }
 
-    private static Person personFromNode(String id, ObjectNode node) {
-        var personDocument = GSON.fromJson(node.toString(), PersonDocument.class);
+    private Person personFromNode(String id, ObjectNode node) {
+        var personDocument = serializer.fromJson(node.toString(), PersonDocument.class);
         return personDocument.toPerson(id);
     }
 

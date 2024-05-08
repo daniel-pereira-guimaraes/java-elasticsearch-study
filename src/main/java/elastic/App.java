@@ -9,7 +9,6 @@ import elastic.model.PersonRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -40,21 +39,21 @@ public class App {
     }
 
     private static PersonRepository choosePersonRepository() {
-        var repositorySuppliers = mapRepositorySuppliers();
-        var userChoice = getUserChoice(repositorySuppliers.keySet());
-        return repositorySuppliers.values().stream().toList().get(userChoice - 1).get();
+        var menuItems = getMenuItems();
+        var userChoice = getUserChoice(menuItems);
+        return menuItems.get(userChoice - 1).supplier.get();
     }
 
-    private static int getUserChoice(Set<Class<? extends PersonRepository>> classes) {
+    private static int getUserChoice(List<MenuItem> menuItems) {
         var scanner = new Scanner(System.in);
         while (true) {
             System.out.println("--- CHOOSE PERSON REPOSITORY ---");
             System.out.println();
-            printClassMenu(classes);
+            printClassMenu(menuItems);
             System.out.print("\nWhat is your choice? ");
             try {
                 var userChoice = scanner.nextByte();
-                if (userChoice >= 1 && userChoice <= classes.size()) {
+                if (userChoice >= 1 && userChoice <= menuItems.size()) {
                     System.out.println();
                     return userChoice;
                 }
@@ -67,20 +66,23 @@ public class App {
         }
     }
 
-    private static void printClassMenu(Set<Class<? extends PersonRepository>> classes) {
+    private static void printClassMenu(List<MenuItem> menuItems) {
         var option = 0;
-        for (Class<? extends PersonRepository> clazz : classes) {
-            System.out.println(++option + " - " + clazz.getSimpleName());
+        for (var menuItem : menuItems) {
+            System.out.println(++option + " - " + menuItem.clazz.getSimpleName());
         }
     }
 
-    private static Map<Class<? extends PersonRepository>, Supplier<? extends PersonRepository>> mapRepositorySuppliers() {
-        return Map.of(
-                HttpClientJsonPersonRepository.class, () -> new HttpClientJsonPersonRepository(INDEX_NAME),
-                ElasticClientJsonPersonRepository.class, () -> new ElasticClientJsonPersonRepository(INDEX_NAME),
-                ElasticClientPersonRepository.class, () -> new ElasticClientPersonRepository(INDEX_NAME)
+    private static List<MenuItem> getMenuItems() {
+        return List.of(
+                new MenuItem(HttpClientJsonPersonRepository.class,
+                        () -> new HttpClientJsonPersonRepository(INDEX_NAME)),
+                new MenuItem(ElasticClientJsonPersonRepository.class,
+                        () -> new ElasticClientJsonPersonRepository(INDEX_NAME)),
+                new MenuItem(ElasticClientPersonRepository.class,
+                        () -> new ElasticClientPersonRepository(INDEX_NAME))
         );
-    } 
+    }
 
     private static void insertUpdateGetPerson() {
         var person = new Person("Emma", dateOf(1980, 12, 20), BigDecimal.valueOf(0));
@@ -155,4 +157,10 @@ public class App {
             throw new RuntimeException(e);
         }
     }
+
+    private record MenuItem(
+            Class<? extends PersonRepository> clazz,
+            Supplier<? extends PersonRepository> supplier) {
+    }
+
 }
