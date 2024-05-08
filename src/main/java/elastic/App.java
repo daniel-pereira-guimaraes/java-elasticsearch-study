@@ -1,5 +1,6 @@
 package elastic;
 
+import elastic.infra.ElasticClientPersonRepository;
 import elastic.infra.HttpClientJsonPersonRepository;
 import elastic.infra.ElasticClientJsonPersonRepository;
 import elastic.model.Person;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class App {
 
@@ -17,20 +19,16 @@ public class App {
     private static final PersonRepository PERSON_REPOSITORY = choosePersonRepository();
 
     public static void main(String[] args) {
+        PERSON_REPOSITORY.createIndex();
         try {
-            PERSON_REPOSITORY.createIndex();
-            try {
-                insertPersons();
-                insertUpdateGetPerson();
-                waitForIndexing();
-                getAllPersons();
-                queryPersonByName();
-                queryPersonByCreditLimit();
-            } finally {
-                PERSON_REPOSITORY.deleteIndex();
-            }
+            insertPersons();
+            insertUpdateGetPerson();
+            waitForIndexing();
+            getAllPersons();
+            queryPersonByName();
+            queryPersonByCreditLimit();
         } finally {
-            System.exit(0);
+            PERSON_REPOSITORY.deleteIndex();
         }
     }
 
@@ -42,21 +40,47 @@ public class App {
     }
 
     private static PersonRepository choosePersonRepository() {
-        System.out.println("--- CHOOSE PERSON REPOSITORY ---");
-        System.out.println();
-        System.out.println("1 - " + ElasticClientJsonPersonRepository.class.getSimpleName());
-        System.out.println("2 - " + HttpClientJsonPersonRepository.class.getSimpleName());
+        var repositorySuppliers = mapRepositorySuppliers();
+        var userChoice = getUserChoice(repositorySuppliers.keySet());
+        return repositorySuppliers.values().stream().toList().get(userChoice - 1).get();
+    }
+
+    private static int getUserChoice(Set<Class<? extends PersonRepository>> classes) {
         var scanner = new Scanner(System.in);
         while (true) {
+            System.out.println("--- CHOOSE PERSON REPOSITORY ---");
+            System.out.println();
+            printClassMenu(classes);
             System.out.print("\nWhat is your choice? ");
-            var choice = scanner.nextByte();
-            switch (choice) {
-                case 1: return new ElasticClientJsonPersonRepository(INDEX_NAME);
-                case 2: return new HttpClientJsonPersonRepository(INDEX_NAME);
-                default: System.out.println("Invalid choice!");
+            try {
+                var userChoice = scanner.nextByte();
+                if (userChoice >= 1 && userChoice <= classes.size()) {
+                    System.out.println();
+                    return userChoice;
+                }
+            } catch (Exception e) {
+                // Ignore!
             }
+            System.out.println("Invalid option!");
+            sleep(1000);
+            System.out.println();
         }
     }
+
+    private static void printClassMenu(Set<Class<? extends PersonRepository>> classes) {
+        var option = 0;
+        for (Class<? extends PersonRepository> clazz : classes) {
+            System.out.println(++option + " - " + clazz.getSimpleName());
+        }
+    }
+
+    private static Map<Class<? extends PersonRepository>, Supplier<? extends PersonRepository>> mapRepositorySuppliers() {
+        return Map.of(
+                HttpClientJsonPersonRepository.class, () -> new HttpClientJsonPersonRepository(INDEX_NAME),
+                ElasticClientJsonPersonRepository.class, () -> new ElasticClientJsonPersonRepository(INDEX_NAME),
+                ElasticClientPersonRepository.class, () -> new ElasticClientPersonRepository(INDEX_NAME)
+        );
+    } 
 
     private static void insertUpdateGetPerson() {
         var person = new Person("Emma", dateOf(1980, 12, 20), BigDecimal.valueOf(0));
@@ -121,8 +145,14 @@ public class App {
     }
 
     private static void waitForIndexing() {
+        System.out.println("Waiting for indexing...");
+        sleep(2000);
+        System.out.println();
+    }
+
+    private static void sleep(int delay) {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(delay);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

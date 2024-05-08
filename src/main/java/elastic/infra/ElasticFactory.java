@@ -10,7 +10,11 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
 
+import java.util.logging.Logger;
+
 public class ElasticFactory {
+    private static final Logger LOGGER = Logger.getLogger(ElasticFactory.class.getName());
+
     public static final String SERVER_URL = "http://localhost:9200";
     public static final String USERNAME = System.getenv("ES_USERNAME");
     public static final String PASSWORD = System.getenv("ES_PASSWORD");
@@ -20,7 +24,7 @@ public class ElasticFactory {
     }
 
     public static ElasticsearchClient buildElasticClient() {
-        System.out.println("Connecting to " + SERVER_URL);
+        LOGGER.info("Connecting to " + SERVER_URL);
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(USERNAME, PASSWORD));
         var restClient = RestClient.builder(HttpHost.create(SERVER_URL))
