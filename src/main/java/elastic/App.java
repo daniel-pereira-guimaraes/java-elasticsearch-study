@@ -120,10 +120,8 @@ public class App {
         showPerson(person, "INSERTED");
     }
 
-    private static Date dateOf(int year, int month, int day) {
-        return Date.from(LocalDate.of(year, month, day)
-                .atStartOfDay()
-                .toInstant(ZoneOffset.UTC));
+    private static LocalDate dateOf(int year, int month, int day) {
+        return LocalDate.of(year, month, day);
     }
 
     private static void showPerson(Person person, String caption) {

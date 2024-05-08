@@ -1,13 +1,13 @@
 package elastic.infra;
 
+import elastic.model.LocalDateConverter;
 import elastic.model.Person;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 public class PersonDocument {
     private String name;
-    private Date birthDate;
+    private Integer birthDate;
     private BigDecimal creditLimit;
 
     public PersonDocument() {
@@ -15,12 +15,12 @@ public class PersonDocument {
 
     private PersonDocument(Person person) {
         this.name = person.name();
-        this.birthDate = person.birthDate();
+        this.birthDate = LocalDateConverter.toInt(person.birthDate());
         this.creditLimit = person.creditLimit();
     }
 
     public Person toPerson(String id) {
-        return new Person(id, name, birthDate, creditLimit);
+        return new Person(id, name, LocalDateConverter.fromInt(birthDate), creditLimit);
     }
 
     public static PersonDocument of(Person person) {
@@ -31,7 +31,7 @@ public class PersonDocument {
         return name;
     }
 
-    public Date getBirthDate() {
+    public Integer getBirthDate() {
         return birthDate;
     }
 

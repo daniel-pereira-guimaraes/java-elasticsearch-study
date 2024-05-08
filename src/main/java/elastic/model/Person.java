@@ -1,22 +1,22 @@
 package elastic.model;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class Person {
     private String id;
     private final String name;
-    private final Date birthDate;
+    private final LocalDate birthDate;
     private BigDecimal creditLimit;
 
-    public Person(String name, Date birthDate, BigDecimal creditLimit) {
+    public Person(String name, LocalDate birthDate, BigDecimal creditLimit) {
         this.name = name;
         this.birthDate = birthDate;
         this.creditLimit = validateCreditLimit(creditLimit);
     }
 
-    public Person(String id, String name, Date birthDate, BigDecimal creditLimit) {
+    public Person(String id, String name, LocalDate birthDate, BigDecimal creditLimit) {
         this.id = id;
         this.name = name;
         this.birthDate = birthDate;
@@ -35,7 +35,7 @@ public class Person {
         return name;
     }
 
-    public Date birthDate() {
+    public LocalDate birthDate() {
         return birthDate;
     }
 

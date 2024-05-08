@@ -34,7 +34,8 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
     public void save(Person person) {
         var request = configRequest(new HttpPost(uri(indexName, "_doc", person.id())));
         try {
-            request.setEntity(new StringEntity(GSON.toJson(person)));
+            var personDocument = PersonDocument.of(person);
+            request.setEntity(new StringEntity(GSON.toJson(personDocument)));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -45,7 +46,8 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
     public Optional<Person> get(String id) {
         var request = configRequest(new HttpGet(uri(indexName, "_doc", id)));
         var result = executeRequest(request);
-        return Optional.of(GSON.fromJson(source(result), Person.class));
+        var personDocument = GSON.fromJson(source(result), PersonDocument.class);
+        return Optional.of(personDocument.toPerson(id));
     }
 
     @Override
@@ -164,9 +166,8 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
             var hitObject = hit.getAsJsonObject();
             var id = hitObject.get("_id").getAsString();
             var source = hitObject.getAsJsonObject("_source").toString();
-            var person = GSON.fromJson(source, Person.class);
-            person.initialize(id);
-            list.add(person);
+            var personDocument = GSON.fromJson(source, PersonDocument.class);
+            list.add(personDocument.toPerson(id));
         }
         return list;
     }
