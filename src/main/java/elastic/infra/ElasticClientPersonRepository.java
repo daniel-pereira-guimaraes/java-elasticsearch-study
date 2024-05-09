@@ -18,7 +18,7 @@ public class ElasticClientPersonRepository
 
     private static final Logger LOGGER = Logger.getLogger(ElasticClientPersonRepository.class.getName());
 
-    protected ElasticClientPersonRepository(String indexName) {
+    public ElasticClientPersonRepository(String indexName) {
         super(indexName);
     }
 

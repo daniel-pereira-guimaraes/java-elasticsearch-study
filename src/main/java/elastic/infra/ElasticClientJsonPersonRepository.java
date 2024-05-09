@@ -20,7 +20,7 @@ public class ElasticClientJsonPersonRepository
     private static final Logger LOGGER = Logger.getLogger(ElasticClientJsonPersonRepository.class.getName());
     private final Serializer serializer = new Serializer();
 
-    protected ElasticClientJsonPersonRepository(String indexName) {
+    public ElasticClientJsonPersonRepository(String indexName) {
         super(indexName);
     }
 

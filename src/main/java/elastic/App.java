@@ -137,7 +137,7 @@ public class App {
         System.out.println("name.......: " + person.name());
         System.out.println("birthDate..: " + person.birthDate());
         System.out.println("limitCredit: " + person.creditLimit());
-        System.out.println("isCustomer: " + person.isCustomer());
+        System.out.println("isCustomer.: " + person.isCustomer());
         System.out.println();
     }
 
