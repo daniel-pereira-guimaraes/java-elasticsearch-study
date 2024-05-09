@@ -2,6 +2,7 @@ package elastic.infra;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -57,8 +58,17 @@ public class ElasticClientPersonRepository implements PersonRepository {
     }
 
     @Override
-    public List<Person> getAll() {
-        var request = SearchRequest.of(a -> a.index(indexName));
+    public List<Person> getAll(boolean onlyCustomers) {
+        var builder = new SearchRequest.Builder();
+        builder.index(indexName);
+        if (onlyCustomers) {
+            builder.query(q -> q
+                    .term(TermQuery.of(t -> t
+                            .field("customer").value(true))
+                    )
+            );
+        }
+        var request = builder.build();
         try {
             var response = esClient.search(request, PersonDocument.class);
             return personsFromResponse(response);

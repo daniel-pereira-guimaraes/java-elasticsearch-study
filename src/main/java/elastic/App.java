@@ -24,6 +24,7 @@ public class App {
             insertUpdateGetPerson();
             waitForIndexing();
             getAllPersons();
+            getAllCustomers();
             queryPersonByName();
             queryPersonByCreditLimit();
         } finally {
@@ -32,10 +33,10 @@ public class App {
     }
 
     private static void insertPersons() {
-        insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000)));
-        insertPerson(new Person("Hilary", dateOf(1985, 8, 5), BigDecimal.valueOf(1500)));
-        insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000)));
-        insertPerson(new Person("Joseph Johnson", dateOf(1980, 10, 22), BigDecimal.valueOf(2000)));
+        insertPerson(new Person("John", dateOf(1980, 12, 20), BigDecimal.valueOf(1000), false));
+        insertPerson(new Person("Hilary", dateOf(1985, 8, 5), BigDecimal.valueOf(1500), true));
+        insertPerson(new Person("Anna Johnson", dateOf(1980, 11, 21), BigDecimal.valueOf(3000), true));
+        insertPerson(new Person("Joseph Johnson", dateOf(1980, 10, 22), BigDecimal.valueOf(2000), false));
     }
 
     private static PersonRepository choosePersonRepository() {
@@ -85,7 +86,7 @@ public class App {
     }
 
     private static void insertUpdateGetPerson() {
-        var person = new Person("Emma", dateOf(1980, 12, 20), BigDecimal.valueOf(0));
+        var person = new Person("Emma", dateOf(1980, 12, 20), BigDecimal.valueOf(0), false);
         PERSON_REPOSITORY.save(person);
         showPerson(person, "INSERTED");
         person.updateCreditLimit(BigDecimal.valueOf(1500));
@@ -101,7 +102,11 @@ public class App {
     }
 
     private static void getAllPersons() {
-        showPersons(PERSON_REPOSITORY.getAll(), "ALL PERSONS");
+        showPersons(PERSON_REPOSITORY.getAll(false), "ALL PERSONS");
+    }
+
+    private static void getAllCustomers() {
+        showPersons(PERSON_REPOSITORY.getAll(true), "ALL CUSTOMERS");
     }
 
     private static void queryPersonByName() {
@@ -132,16 +137,29 @@ public class App {
         System.out.println("name.......: " + person.name());
         System.out.println("birthDate..: " + person.birthDate());
         System.out.println("limitCredit: " + person.creditLimit());
+        System.out.println("isCustomer: " + person.isCustomer());
         System.out.println();
     }
 
     private static void showPersons(Collection<Person> persons, String caption) {
         System.out.println("--- " + caption + " ---");
         persons.forEach(person ->
-            System.out.println(person.id() + " | " + person.name() + " | " +
-                    person.birthDate() + " | " + person.creditLimit())
+            System.out.println(person.id()
+                    + " | " + padRight(person.name(), 15)
+                    + " | " + person.birthDate()
+                    + " | " + person.creditLimit()
+                    + " | " + person.isCustomer())
         );
         System.out.println();
+    }
+
+    private static String padRight(Object object, int length) {
+        var str = Objects.toString(object);
+        return switch (Integer.compare(str.length(), length)) {
+            case 0 -> str;
+            case 1 -> str.substring(0, length);
+            default -> str + " ".repeat(length - str.length());
+        };
     }
 
     private static void waitForIndexing() {

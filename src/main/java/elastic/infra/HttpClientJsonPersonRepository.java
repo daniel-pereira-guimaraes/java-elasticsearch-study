@@ -46,15 +46,16 @@ public class HttpClientJsonPersonRepository implements PersonRepository {
     }
 
     @Override
-    public List<Person> getAll() {
-        var request = configRequest(new HttpGet(uri(indexName, "_search")));
+    public List<Person> getAll(boolean onlyCustomers) {
+        var queryParams = onlyCustomers ? "?q=customer:true" : null;
+        var request = configRequest(new HttpGet(uri(indexName, "_search", queryParams)));
         return sources(executeRequest(request));
     }
 
     @Override
     public List<Person> queryByName(String name) {
-        var queryParam = "_search?q=name:" + urlEncode(name);
-        var request = configRequest(new HttpGet(uri(indexName, queryParam)));
+        var queryParams = "?q=name:" + urlEncode(name);
+        var request = configRequest(new HttpGet(uri(indexName, "_search", queryParams)));
         return sources(executeRequest(request));
     }
 

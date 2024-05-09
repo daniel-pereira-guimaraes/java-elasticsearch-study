@@ -9,18 +9,21 @@ public class Person {
     private final String name;
     private final LocalDate birthDate;
     private BigDecimal creditLimit;
+    private final Boolean customer;
 
-    public Person(String name, LocalDate birthDate, BigDecimal creditLimit) {
+    public Person(String name, LocalDate birthDate, BigDecimal creditLimit, Boolean customer) {
         this.name = name;
         this.birthDate = birthDate;
         this.creditLimit = validateCreditLimit(creditLimit);
+        this.customer = customer;
     }
 
-    public Person(String id, String name, LocalDate birthDate, BigDecimal creditLimit) {
+    public Person(String id, String name, LocalDate birthDate, BigDecimal creditLimit, Boolean customer) {
         this.id = id;
         this.name = name;
         this.birthDate = birthDate;
         this.creditLimit = validateCreditLimit(creditLimit);
+        this.customer = customer;
     }
 
     public void initialize(String id) {
@@ -41,6 +44,10 @@ public class Person {
 
     public BigDecimal creditLimit() {
         return creditLimit;
+    }
+
+    public boolean isCustomer() {
+        return customer != null && customer;
     }
 
     public void updateCreditLimit(BigDecimal creditLimit) {
@@ -69,12 +76,13 @@ public class Person {
         return Objects.equals(id, person.id)
                 && Objects.equals(name, person.name)
                 && Objects.equals(birthDate, person.birthDate)
-                && Objects.equals(creditLimit, person.creditLimit);
+                && Objects.equals(creditLimit, person.creditLimit)
+                && Objects.equals(customer, person.customer);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, birthDate);
+        return Objects.hash(name, birthDate, customer);
     }
 
     @Override
@@ -84,6 +92,7 @@ public class Person {
                 ", name='" + name + '\'' +
                 ", birthDate=" + birthDate +
                 ", creditLimit=" + creditLimit +
+                ", customer=" + customer +
                 '}';
     }
 }
