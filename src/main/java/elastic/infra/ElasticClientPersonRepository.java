@@ -1,14 +1,7 @@
 package elastic.infra;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
-import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
-import co.elastic.clients.json.JsonData;
 import elastic.model.Person;
 import elastic.model.PersonRepository;
 
@@ -19,15 +12,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-public class ElasticClientPersonRepository implements PersonRepository {
+public class ElasticClientPersonRepository
+        extends ElasticClientPersonRepositoryBase
+        implements PersonRepository {
 
     private static final Logger LOGGER = Logger.getLogger(ElasticClientPersonRepository.class.getName());
 
-    private final ElasticsearchClient esClient = ElasticFactory.buildElasticClient();
-    private final String indexName;
-
-    public ElasticClientPersonRepository(String indexName) {
-        this.indexName = indexName;
+    protected ElasticClientPersonRepository(String indexName) {
+        super(indexName);
     }
 
     @Override
@@ -44,7 +36,7 @@ public class ElasticClientPersonRepository implements PersonRepository {
 
     @Override
     public Optional<Person> get(String id) {
-        var request = new GetRequest.Builder().index(indexName).id(id).build();
+        var request = buildGetRequest(id);
         try {
             var response = esClient.get(request, PersonDocument.class);
             if (response.source() == null) {
@@ -59,16 +51,7 @@ public class ElasticClientPersonRepository implements PersonRepository {
 
     @Override
     public List<Person> getAll(boolean onlyCustomers) {
-        var builder = new SearchRequest.Builder();
-        builder.index(indexName);
-        if (onlyCustomers) {
-            builder.query(q -> q
-                    .term(TermQuery.of(t -> t
-                            .field("customer").value(true))
-                    )
-            );
-        }
-        var request = builder.build();
+        var request = buildGetAllRequest(onlyCustomers);
         try {
             var response = esClient.search(request, PersonDocument.class);
             return personsFromResponse(response);
@@ -80,18 +63,9 @@ public class ElasticClientPersonRepository implements PersonRepository {
 
     @Override
     public List<Person> queryByName(String name) {
+        var request = buildQueryByNameRequest(name);
         try {
-            var response = esClient.search(s -> s
-                    .index(indexName)
-                    .query(q -> q
-                            .match(m -> m
-                                    .field("name")
-                                    .query(name)
-                                    .fuzziness("2")
-                            )
-                    ),
-                    PersonDocument.class
-            );
+            var response = esClient.search(request, PersonDocument.class);
             return personsFromResponse(response);
         } catch (IOException e) {
             LOGGER.severe("Query by name error: " + e.getMessage());
@@ -101,45 +75,12 @@ public class ElasticClientPersonRepository implements PersonRepository {
 
     @Override
     public List<Person> queryByCreditLimit(BigDecimal minValue, BigDecimal maxValue) {
+        var request = buildQueryByCreditLimitRequest(minValue, maxValue);
         try {
-            var rangeQuery = RangeQuery.of(rq -> rq
-                    .field("creditLimit")
-                    .gte(JsonData.of(minValue))
-                    .lte(JsonData.of(maxValue))
-            )._toQuery();
-
-            var response = esClient.search(s -> s
-                    .index(indexName)
-                    .query(rangeQuery),
-                    PersonDocument.class
-            );
-
+            var response = esClient.search(request, PersonDocument.class);
             return personsFromResponse(response);
         } catch (IOException e) {
             LOGGER.severe("Query by name error: " + e.getMessage());
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    public void createIndex() {
-        try {
-            esClient.indices().create(c -> c
-                    .index(indexName)
-            );
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    public void deleteIndex() {
-        var request = new DeleteIndexRequest.Builder().index(indexName).build();
-        try {
-            esClient.indices().delete(request);
-            LOGGER.info("Deleted index: " + indexName);
-        } catch (IOException e) {
-            LOGGER.severe("Delete index error: " + e.getMessage());
             throw new UncheckedIOException(e);
         }
     }
