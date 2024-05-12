@@ -15,9 +15,9 @@ The main goal of this study project is to explore the fundamental concepts and t
 - Elasticsearch Java API 8.13.2
 - Jackson Library 2.17.0
 - Apache HttpClient
-- Maven
 - JUnit 5
 - Hamcrest Library
+- Maven
 
 ## Project Structure
 
