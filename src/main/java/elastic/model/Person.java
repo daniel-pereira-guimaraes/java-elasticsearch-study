@@ -12,22 +12,19 @@ public class Person {
     private final Boolean customer;
 
     public Person(String name, LocalDate birthDate, BigDecimal creditLimit, Boolean customer) {
-        this.name = name;
-        this.birthDate = birthDate;
-        this.creditLimit = validateCreditLimit(creditLimit);
-        this.customer = customer;
+        this(null, name, birthDate, creditLimit, customer);
     }
 
     public Person(String id, String name, LocalDate birthDate, BigDecimal creditLimit, Boolean customer) {
         this.id = id;
-        this.name = name;
+        this.name = validateName(name);
         this.birthDate = birthDate;
         this.creditLimit = validateCreditLimit(creditLimit);
         this.customer = customer;
     }
 
     public void initialize(String id) {
-        this.id = id;
+        this.id = Objects.requireNonNull(id, "Cannot initialize with null id!");
     }
 
     public String id() {
@@ -94,5 +91,12 @@ public class Person {
                 ", creditLimit=" + creditLimit +
                 ", customer=" + customer +
                 '}';
+    }
+
+    private String validateName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Person name is required!");
+        }
+        return name;
     }
 }
