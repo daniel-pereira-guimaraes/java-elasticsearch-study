@@ -17,16 +17,15 @@ The main goal of this study project is to explore the fundamental concepts and t
 - Apache HttpClient
 - Maven
 
-This section provides a brief overview of the key technologies and resources utilized in the Java Elasticsearch Study Project.
-
 ## Project Structure
 
 - **elastic Package**: Main application classes and entry point.
   - **App.java**: Main class controlling the application flow.
 
-- **elastic.model Package**: Model classes representing entities.
+- **elastic.model Package**: Model classes.
   - **Person.java**: Represents a person entity.
-  - **LocalDateConverter.java**: Utility class with methods for converting LocalDate to Integer and vice versa.
+  - **PersonRepository.java**: Interface for a abstract person repository.
+  - **LocalDateConverter.java**: Utility class for converting LocalDate to Integer and vice versa.
   - **PersonNotFoundException.java**: Custom exception class for when a person is not found.
 
 - **elastic.infra Package**: Infrastructure classes for data access and serialization.
@@ -37,8 +36,6 @@ This section provides a brief overview of the key technologies and resources uti
   - **ElasticClientPersonRepositoryBase.java**: Abstract class implementing common methods for inherited classes (ElasticClientJsonPersonRepository and ElasticClientPersonRepository).
   - **ElasticClientJsonPersonRepository.java**: Implementation of PersonRepository accessing the Elasticsearch API using the Java API for Elasticsearch, manipulating JSON.
   - **ElasticClientPersonRepository.java**: Implementation of PersonRepository accessing the Elasticsearch API using the Java API for Elasticsearch, manipulating Person instances as objects instead of manipulating JSON.
-
-This section provides a brief overview of each class and interface in the project, outlining their purposes and responsibilities.
 
 ---
 
