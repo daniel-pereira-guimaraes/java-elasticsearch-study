@@ -16,6 +16,8 @@ The main goal of this study project is to explore the fundamental concepts and t
 - Jackson Library 2.17.0
 - Apache HttpClient
 - Maven
+- JUnit 5
+- Hamcrest Library
 
 ## Project Structure
 
